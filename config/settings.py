@@ -33,6 +33,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -122,6 +125,16 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Authentication
+
+AUTH_USER_MODEL = 'users.User'
+
+AUTH_EMAIL_VERIFICATION = True
+
+AUTHENTICATION_BACKENDS = (
+    'users.custom_backend.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 # Environment
 
