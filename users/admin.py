@@ -10,7 +10,7 @@ class UserAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {
-            'fields': ['first_name', 'last_name', 'email', 'password']
+            'fields': ['first_name', 'last_name', 'username', 'email', 'password']
         }),
         ('Additional Info', {
             'fields': ['is_online', 'last_login', 'joined_at']
