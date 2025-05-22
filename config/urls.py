@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
-from users.views import LoginView, MeView
+from users.views import LoginView, LogoutView, MeView
 
 urlpatterns = [
     # Admin
@@ -13,7 +13,8 @@ urlpatterns = [
     # Auth
     path('auth/me/', MeView.as_view(), name='me'),
     path('auth/login/', LoginView.as_view(), name='login'),
-
+    path('auth/logout/', LogoutView.as_view(), name='logout'),
+    
     # Favicon
     path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico')),
 ]

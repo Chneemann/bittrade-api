@@ -36,3 +36,11 @@ class LoginView(APIView):
             return Response({'error': 'Unable to login with provided credentials.'}, status=401)
 
         return Response(serializer.errors, status=400)
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        response = Response(status=200)
+        response.delete_cookie('auth_token', path='/', domain=None)
+        return response

@@ -25,9 +25,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1',
+    'join-api.andre-kempf.com',
+    '45.157.177.172',
 ]
 
 CORS_ALLOWED_ORIGINS = [
+    'https://45.157.177.172',
+    'https://bittrade.andre-kempf.com', 
     'http://localhost:4200',
 ]
 
