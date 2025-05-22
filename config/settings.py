@@ -31,6 +31,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -139,7 +141,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'users.authentication.ExpiringTokenAuthentication',
+        'users.authentication.CookieTokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
