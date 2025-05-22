@@ -1,6 +1,22 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Permission
+from rest_framework.authtoken.models import Token
+from django.utils import timezone
+from config.settings import TOKEN_EXPIRATION_TIME
+
+class ExpiringToken(Token):
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    def is_expired(self):
+        if self.expires_at is None:
+            return True
+        return self.expires_at < timezone.now()
+
+    def save(self, *args, **kwargs):
+        if not self.pk and not self.expires_at:
+            self.expires_at = timezone.now() + TOKEN_EXPIRATION_TIME
+        super().save(*args, **kwargs)
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None):
@@ -23,6 +39,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
     
+
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     first_name = models.CharField(max_length=50, blank=True, null=True)

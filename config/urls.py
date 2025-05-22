@@ -4,13 +4,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
-from users.views import LoginView
+from users.views import LoginView, MeView
 
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
 
     # Auth
+    path('auth/me/', MeView.as_view(), name='me'),
     path('auth/login/', LoginView.as_view(), name='login'),
 
     # Favicon
