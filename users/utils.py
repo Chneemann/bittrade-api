@@ -5,8 +5,13 @@ from rest_framework import status
 from .models import ExpiringToken
 from config.settings import TOKEN_EXPIRATION_TIME
 from django.conf import settings
+from django_ratelimit.decorators import ratelimit
+from functools import wraps
 
 def set_auth_cookie(response, token_key, max_age):
+    """
+    Sets the auth_token cookie on the response with secure flags.
+    """
     response.set_cookie(
         key='auth_token',
         value=token_key,
@@ -19,6 +24,10 @@ def set_auth_cookie(response, token_key, max_age):
     return response
 
 def create_token_response(user):
+    """
+    Creates or renews an ExpiringToken for the user, 
+    updates the expiration, and sets the auth cookie in the response.
+    """
     now = timezone.now()
 
     with transaction.atomic():
@@ -36,3 +45,21 @@ def create_token_response(user):
 
     res = Response({'detail': 'Login successful'}, status=status.HTTP_200_OK)
     return set_auth_cookie(res, token.key, TOKEN_EXPIRATION_TIME)
+
+def ratelimit_response(key='ip', rate='5/m', method='POST'):
+    """
+    Custom decorator wrapping django-ratelimit with a 
+    friendly JSON response on rate limit hit.
+    """
+    def decorator(view_func):
+        @ratelimit(key=key, rate=rate, method=method, block=False)
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if getattr(request, 'limited', False):
+                return Response({
+                    'error': 'rate_limit_exceeded',
+                    'message': 'Too many requests. Please try again later.'
+                }, status=429)
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
