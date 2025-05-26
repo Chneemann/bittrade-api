@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
 from users.views import LoginView, LogoutView, MeView
+from coins.views import CoinView
 
 urlpatterns = [
     # Admin
@@ -15,8 +16,11 @@ urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
     
+    # coins
+    path('api/coins/', CoinView.as_view(), name='coins'),
+
     # Favicon
-    path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico')),
+    path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
 ]
 
 if settings.DEBUG:
