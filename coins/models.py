@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db.models import Sum, F, DecimalField
+from django.utils.text import slugify
 from decimal import Decimal
 
 User = get_user_model()
@@ -11,7 +12,13 @@ class Coin(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=50)
     symbol = models.CharField(max_length=10, unique=True)
+    slug = models.SlugField(max_length=50, null=True, blank=True)
     is_active = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.symbol})"

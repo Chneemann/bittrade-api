@@ -16,8 +16,8 @@ class DecimalFormatAdminMixin:
 
 @admin.register(Coin)
 class CoinAdmin(admin.ModelAdmin):
-    list_display = ['name', 'symbol', 'is_active']
-    readonly_fields = ['name', 'symbol']
+    list_display = ['name', 'slug', 'symbol', 'is_active']
+    readonly_fields = ['name', 'slug', 'symbol']
 
     def has_add_permission(self, request):
         return False

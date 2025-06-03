@@ -1,5 +1,5 @@
 [
-  { "name": "Bitcoin", "symbol": "BTC" },
-  { "name": "Ethereum", "symbol": "ETH" },
-  { "name": "Solana", "symbol": "SOL" }
+  { "name": "Bitcoin", "symbol": "BTC", "slug": "bitcoin" },
+  { "name": "Ethereum", "symbol": "ETH", "slug": "ethereum" },
+  { "name": "Solana", "symbol": "SOL", "slug": "solana" }
 ]

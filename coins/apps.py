@@ -22,7 +22,10 @@ class CoinsConfig(AppConfig):
                         for c in coins:
                             Coin.objects.update_or_create(
                                 symbol=c['symbol'],
-                                defaults={'name': c['name']}
+                                defaults={
+                                    'name': c['name'],
+                                    'slug': c['slug'],
+                                }
                             )
             except OperationalError:
                 pass
