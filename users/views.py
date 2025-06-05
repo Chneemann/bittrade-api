@@ -5,8 +5,8 @@ from .utils import create_token_response, ratelimit_response
 from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.utils.decorators import method_decorator
-from coins.models import Coin, CoinTransaction
-from coins.serializers import CoinTransactionSerializer
+from coins.models import Coin, CoinTransaction, CoinHolding
+from coins.serializers import CoinTransactionSerializer, CoinHoldingSerializer
 from rest_framework import status
 
 class MeView(APIView):
@@ -20,6 +20,22 @@ class MeView(APIView):
             "email": user.email,
         })
     
+class MyHoldingsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, coin_id):
+        try:
+            coin = Coin.objects.get(name__iexact=coin_id)
+        except Coin.DoesNotExist:
+            return Response({'detail': 'Coin not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        holding = CoinHolding.objects.filter(user=request.user, coin=coin).first()
+        if not holding:
+            return Response({'detail': 'Holding not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CoinHoldingSerializer(holding)
+        return Response(serializer.data)
+
 class MyTransactionsView(APIView):
     permission_classes = [IsAuthenticated]
 
