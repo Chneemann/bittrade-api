@@ -30,12 +30,16 @@ class MyHoldingsView(APIView):
             return Response({'detail': 'Coin not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         holding = CoinHolding.objects.filter(user=request.user, coin=coin).first()
+        
         if not holding:
-            return Response({'detail': 'Holding not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'amount': 0, 'detail': 'No holdings found.'},
+                status=status.HTTP_200_OK
+            )
 
         serializer = CoinHoldingSerializer(holding)
         return Response(serializer.data)
-
+    
 class MyTransactionsView(APIView):
     permission_classes = [IsAuthenticated]
 
