@@ -23,6 +23,14 @@ class MeView(APIView):
 class MyHoldingsView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        holdings = CoinHolding.objects.filter(user=request.user)
+        serializer = CoinHoldingSerializer(holdings, many=True)
+        return Response(serializer.data)
+    
+class MyCoinHoldingsView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, coin_id):
         try:
             coin = Coin.objects.get(name__iexact=coin_id)
