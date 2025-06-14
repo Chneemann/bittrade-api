@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
 from users.views import LoginView, LogoutView, MeView, MyTransactionsView, MyCoinTransactionsView, MyHoldingsView, MyCoinHoldingsView
+from wallet.views import MyWalletView
 from coins.views import CoinView
 
 urlpatterns = [
@@ -22,6 +23,9 @@ urlpatterns = [
     path('api/me/holdings/', MyHoldingsView.as_view(), name='my-holdings'),
     path('api/me/holdings/<str:coin_id>/', MyCoinHoldingsView.as_view(), name='my-holdings'),
     
+    #user wallet
+    path('api/me/wallet/', MyWalletView.as_view(), name='my-wallet'),
+
     # coins
     path('api/coins/', CoinView.as_view(), name='coins'),
 
