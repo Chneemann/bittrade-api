@@ -27,6 +27,26 @@ class WalletMixin:
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+class WalletTransactionsView(WalletMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        wallet = self.get_wallet(request)
+        if wallet is None:
+            return self.wallet_not_found_response()
+
+        transactions = wallet.transactions.order_by('-created_at')
+        data = [
+            {
+                'id': str(t.id),
+                'type': t.transaction_type,
+                'amount': float(t.amount),
+                'created_at': t.created_at.isoformat(),
+            }
+            for t in transactions
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
 class MyWalletView(WalletMixin, APIView):
     permission_classes = [IsAuthenticated]
 
@@ -50,10 +70,13 @@ class DepositWalletView(WalletMixin, APIView):
         if error_response:
             return error_response
 
-        wallet.balance += amount
-        wallet.save()
-        return Response({'balance': wallet.balance}, status=status.HTTP_200_OK)
+        try:
+            wallet.apply_transaction('deposit', amount)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+        return Response({'balance': wallet.balance}, status=status.HTTP_200_OK)
+    
 class WithdrawWalletView(WalletMixin, APIView):
     permission_classes = [IsAuthenticated]
 
@@ -66,12 +89,9 @@ class WithdrawWalletView(WalletMixin, APIView):
         if error_response:
             return error_response
 
-        if wallet.balance < amount:
-            return Response(
-                {'detail': 'Insufficient funds.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        try:
+            wallet.apply_transaction('withdrawal', amount)
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        wallet.balance -= amount
-        wallet.save()
         return Response({'balance': wallet.balance}, status=status.HTTP_200_OK)
