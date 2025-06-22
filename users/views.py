@@ -73,6 +73,18 @@ class MyCoinTransactionsView(APIView):
         serializer = CoinTransactionSerializer(transactions, many=True)
         return Response(serializer.data)
 
+    def post(self, request, coin_id):
+        try:
+            coin = Coin.objects.get(name__iexact=coin_id)
+        except Coin.DoesNotExist:
+            return Response({'detail': 'Coin not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CoinTransactionSerializer(data=request.data, context={'request': request, 'coin': coin})
+        serializer.is_valid(raise_exception=True)
+        transaction = serializer.save()
+        response_serializer = CoinTransactionSerializer(transaction, context={'request': request})
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
 class LoginView(APIView):
     permission_classes = [AllowAny]
     serializer_class = LoginSerializer
