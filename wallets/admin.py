@@ -6,7 +6,7 @@ User = get_user_model()
 
 class WalletTransactionInline(admin.TabularInline):
     model = WalletTransaction
-    readonly_fields = ['transaction_type', 'amount', 'created_at']
+    readonly_fields = ['transaction_type', 'transaction_source', 'amount', 'created_at']
     can_delete = False
     extra = 0
     
@@ -32,8 +32,8 @@ class WalletAdmin(admin.ModelAdmin):
 
 @admin.register(WalletTransaction)
 class WalletTransactionAdmin(admin.ModelAdmin):
-    list_display = ['wallet_user', 'transaction_type', 'amount', 'created_at']
-    list_filter = ['transaction_type', 'created_at']
+    list_display = ['wallet_user', 'transaction_type', 'transaction_source', 'amount', 'created_at']
+    list_filter = ['transaction_type', 'transaction_source', 'created_at']
     search_fields = ['wallet__user__username', 'wallet__user__email']
     ordering = ['-created_at']
     date_hierarchy = 'created_at'

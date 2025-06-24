@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from decimal import Decimal
-from .models import Wallet
+from .models import Wallet, WalletTransaction
 
 class WalletMixin:
     def get_wallet(self, request):
@@ -40,6 +40,7 @@ class WalletTransactionsView(WalletMixin, APIView):
             {
                 'id': str(t.id),
                 'type': t.transaction_type,
+                'source': t.transaction_source,
                 'amount': float(t.amount),
                 'created_at': t.created_at.isoformat(),
             }
@@ -69,9 +70,13 @@ class DepositWalletView(WalletMixin, APIView):
         amount, error_response = self.parse_amount(request)
         if error_response:
             return error_response
+        
+        transaction_source = request.data.get('transaction_source')
+        if transaction_source not in dict(WalletTransaction.TRANSACTION_SOURCES):
+            return Response({'detail': 'Invalid transaction source.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            wallet.apply_transaction('deposit', amount)
+            wallet.apply_transaction('deposit', amount, transaction_source)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -88,9 +93,13 @@ class WithdrawWalletView(WalletMixin, APIView):
         amount, error_response = self.parse_amount(request)
         if error_response:
             return error_response
+        
+        transaction_source = request.data.get('transaction_source')
+        if transaction_source not in dict(WalletTransaction.TRANSACTION_SOURCES):
+            return Response({'detail': 'Invalid transaction source.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            wallet.apply_transaction('withdrawal', amount)
+            wallet.apply_transaction('withdrawal', amount, transaction_source)
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

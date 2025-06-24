@@ -20,14 +20,20 @@ class Wallet(models.Model):
         withdrawals = self.transactions.filter(transaction_type='withdrawal').aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
         return deposits - withdrawals
 
-    def apply_transaction(self, transaction_type, amount):
+    def apply_transaction(self, transaction_type, amount, transaction_source):
+        if transaction_type not in dict(WalletTransaction.TRANSACTION_TYPES):
+            raise ValueError("Invalid transaction type")
+        if transaction_source not in dict(WalletTransaction.TRANSACTION_SOURCES):
+            raise ValueError("Invalid transaction source")
+        
         if transaction_type == 'withdrawal' and self.balance < amount:
             raise ValueError("Insufficient balance")
-
+        
         with transaction.atomic():
             WalletTransaction.objects.create(
                 wallet=self,
                 transaction_type=transaction_type,
+                transaction_source=transaction_source,
                 amount=amount
             )
 
@@ -37,9 +43,15 @@ class WalletTransaction(models.Model):
         ('withdrawal', 'Withdrawal'),
     ]
 
+    TRANSACTION_SOURCES = [
+        ('fiat', 'Fiat Transfer'),
+        ('coin', 'Coin Trade'), 
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    transaction_source = models.CharField(max_length=20, choices=TRANSACTION_SOURCES)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
