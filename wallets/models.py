@@ -25,7 +25,6 @@ class Wallet(models.Model):
             raise ValueError("Invalid transaction type")
         if transaction_source not in dict(WalletTransaction.TRANSACTION_SOURCES):
             raise ValueError("Invalid transaction source")
-        
         if transaction_type == 'withdrawal' and self.balance < amount:
             raise ValueError("Insufficient balance")
         
@@ -34,7 +33,7 @@ class Wallet(models.Model):
                 wallet=self,
                 transaction_type=transaction_type,
                 transaction_source=transaction_source,
-                amount=amount
+                amount=amount.quantize(Decimal('0.01'))
             )
 
 class WalletTransaction(models.Model):

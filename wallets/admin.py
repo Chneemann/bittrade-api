@@ -39,9 +39,6 @@ class WalletTransactionAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     list_select_related = ['wallet__user']
 
-    def has_delete_permission(self, request, obj=None):
-        return False
-
     @admin.display(description='User', ordering='wallet__user__username')
     def wallet_user(self, obj):
         return obj.wallet.user
