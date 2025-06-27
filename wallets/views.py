@@ -80,7 +80,11 @@ class DepositWalletView(WalletMixin, APIView):
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'balance': wallet.balance}, status=status.HTTP_200_OK)
+        return Response({
+            'balance': wallet.balance,
+            'amount': amount,
+            'type': 'deposit'
+        }, status=status.HTTP_200_OK)
     
 class WithdrawWalletView(WalletMixin, APIView):
     permission_classes = [IsAuthenticated]
@@ -103,4 +107,8 @@ class WithdrawWalletView(WalletMixin, APIView):
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'balance': wallet.balance}, status=status.HTTP_200_OK)
+        return Response({
+            'balance': wallet.balance,
+            'amount': amount,
+            'type': 'withdraw'
+        }, status=status.HTTP_200_OK)
