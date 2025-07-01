@@ -15,9 +15,18 @@ class MeView(APIView):
     @method_decorator(ratelimit_response(rate='10/m', method='GET'))
     def get(self, request, *args, **kwargs):
         user = request.user
+
+        purchase_count = CoinTransaction.objects.filter(user=user, transaction_type='buy').count()
+        sale_count = CoinTransaction.objects.filter(user=user, transaction_type='sell').count()
+        held_coins_count = CoinHolding.objects.filter(user=user, amount__gt=0).count()
+
         return Response({
             "id": str(user.id),
             "email": user.email,
+            "username": user.username,
+            "coin_purchases": purchase_count,
+            "coin_sales": sale_count,
+            "held_coins": held_coins_count,
         })
     
 class MyHoldingsView(APIView):
