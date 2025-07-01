@@ -9,6 +9,10 @@ from coins.models import Coin, CoinTransaction, CoinHolding
 from coins.serializers import CoinTransactionSerializer, CoinHoldingSerializer
 from rest_framework import status
 
+from decimal import Decimal
+from wallets.models import Wallet
+from django.db.models import Sum
+
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -20,6 +24,18 @@ class MeView(APIView):
         sale_count = CoinTransaction.objects.filter(user=user, transaction_type='sell').count()
         held_coins_count = CoinHolding.objects.filter(user=user, amount__gt=0).count()
 
+        wallet = Wallet.objects.filter(user=user).first()
+
+        if wallet:
+            deposits = wallet.transactions.filter(transaction_type='deposit').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            withdrawals = wallet.transactions.filter(transaction_type='withdrawal').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+            balance = deposits - withdrawals
+        else:
+            deposits = Decimal('0')
+            withdrawals = Decimal('0')
+            balance = Decimal('0')
+
         return Response({
             "id": str(user.id),
             "email": user.email,
@@ -27,6 +43,9 @@ class MeView(APIView):
             "coin_purchases": purchase_count,
             "coin_sales": sale_count,
             "held_coins": held_coins_count,
+            "wallet_deposits": float(deposits),
+            "wallet_withdrawals": float(withdrawals),
+            "wallet_balance": float(balance),
         })
     
 class MyHoldingsView(APIView):
