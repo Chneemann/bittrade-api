@@ -4,13 +4,13 @@ from django.contrib.auth.models import Group
 
 class UserAdmin(admin.ModelAdmin):
     exclude = ('uId',)
-    list_display = ('email', 'first_name', 'last_name', 'last_login', 'is_online', 'is_active')
+    list_display = ('email', 'username', 'verified', 'last_login', 'is_online', 'is_active')
     list_filter = ('is_online', 'is_active')
-    search_fields = ('email', 'first_name', 'last_name')
+    search_fields = ('email', 'username', 'first_name', 'last_name')
 
     fieldsets = (
         (None, {
-            'fields': ['first_name', 'last_name', 'username', 'email', 'password']
+            'fields': ['first_name', 'last_name', 'username', 'email', 'password', 'verified']
         }),
         ('Additional Info', {
             'fields': ['is_online', 'last_login', 'joined_at']
