@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializer import LoginSerializer
+from .serializer import LoginSerializer, UserUpdateSerializer
 from .utils import create_token_response, ratelimit_response
 from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -47,7 +47,18 @@ class MeView(APIView):
             "wallet_withdrawals": float(withdrawals),
             "wallet_balance": float(balance),
         })
-    
+
+class MeUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 class MyHoldingsView(APIView):
     permission_classes = [IsAuthenticated]
 
