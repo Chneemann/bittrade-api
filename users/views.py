@@ -8,10 +8,16 @@ from django.utils.decorators import method_decorator
 from coins.models import Coin, CoinTransaction, CoinHolding
 from coins.serializers import CoinTransactionSerializer, CoinHoldingSerializer
 from rest_framework import status
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth import get_user_model
 
 from decimal import Decimal
 from wallets.models import Wallet
 from django.db.models import Sum
+
+User = get_user_model()
+
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -54,11 +60,16 @@ class MeUpdateView(APIView):
     def patch(self, request, *args, **kwargs):
         serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
+            email_changed = serializer.is_email_changed()
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({
+                "username": serializer.validated_data.get("username"),
+                "email": serializer.validated_data.get("email"),
+                "email_verification_required": email_changed
+            })
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+           
 class MyHoldingsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -154,6 +165,12 @@ class LoginView(APIView):
                 'message': 'Account inactive. Please check your email.'
             }, status=403)
 
+        if not user.unconfirmed_email:
+            return Response({
+                'code': 'email_not_confirmed',
+                'detail': 'Please confirm your email address.'
+            }, status=403)
+        
         return create_token_response(user)
 
 
@@ -164,3 +181,26 @@ class LogoutView(APIView):
         response = Response(status=200)
         response.delete_cookie('auth_token', path='/', domain=None)
         return response
+    
+class ConfirmEmailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        uidb64 = request.query_params.get("uid")
+        token = request.query_params.get("token")
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({"detail": "Invalid link."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if default_token_generator.check_token(user, token):
+            user.email = user.unconfirmed_email
+            user.unconfirmed_email = None
+            user.verified = True
+            user.save()
+            return Response({"detail": "Email successfully confirmed."})
+        else:
+            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+         

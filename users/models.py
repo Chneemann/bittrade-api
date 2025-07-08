@@ -46,6 +46,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=50, blank=True, null=True)
     username = models.CharField(max_length=50, null=True)
     email = models.EmailField(unique=True)
+    unconfirmed_email = models.EmailField(blank=True, null=True)
     verified = models.BooleanField(default=False)
     is_online = models.BooleanField(default=False)
     last_login = models.DateTimeField(blank=True, null=True)

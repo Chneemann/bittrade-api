@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
-from users.views import LoginView, LogoutView, MeView, MeUpdateView, MyTransactionsView, MyCoinTransactionsView, MyHoldingsView, MyCoinHoldingsView
+from users.views import LoginView, LogoutView, MeView, MeUpdateView, MyTransactionsView, MyCoinTransactionsView, MyHoldingsView, MyCoinHoldingsView, ConfirmEmailView
 from wallets.views import MyWalletView, DepositWalletView, WithdrawWalletView
 from coins.views import CoinView
 
@@ -16,6 +16,7 @@ urlpatterns = [
     path('auth/me/', MeView.as_view(), name='me'),
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
+    path('auth/verify-email/', ConfirmEmailView.as_view(), name='verify-email'),
 
     # Profile
     path('auth/me/update/', MeUpdateView.as_view(), name='me-update'),

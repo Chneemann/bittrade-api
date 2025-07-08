@@ -2,6 +2,10 @@ import re
 from rest_framework import serializers
 from django.core.validators import MinLengthValidator
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 
 User = get_user_model()
 
@@ -48,3 +52,28 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Username must be at least 8 characters long")
 
         return value
+    
+    def is_email_changed(self):
+        new_email = self.validated_data.get("email")
+        return bool(new_email and new_email != self.instance.email)
+
+    def update(self, instance, validated_data):
+        new_email = validated_data.get('email')
+        if new_email and new_email != instance.email:
+            instance.unconfirmed_email = new_email
+            self.send_email_verification(instance)
+            validated_data.pop('email')
+
+        return super().update(instance, validated_data)
+
+    def send_email_verification(self, user):
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        verify_url = f"http://localhost:4200/auth/verify-email/?uid={uid}&token={token}"
+
+        send_mail(
+            subject="Confirm your new email",
+            message=f"Click the link to confirm your new email address: {verify_url}",
+            from_email="noreply@your-domain.com",
+            recipient_list=[user.unconfirmed_email],
+        )
