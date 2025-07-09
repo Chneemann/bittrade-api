@@ -164,15 +164,8 @@ class LoginView(APIView):
                 'error': 'account_inactive',
                 'message': 'Account inactive. Please check your email.'
             }, status=403)
-
-        if not user.unconfirmed_email:
-            return Response({
-                'code': 'email_not_confirmed',
-                'detail': 'Please confirm your email address.'
-            }, status=403)
         
         return create_token_response(user)
-
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
