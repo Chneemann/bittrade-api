@@ -46,6 +46,7 @@ class MeView(APIView):
             "id": str(user.id),
             "email": user.email,
             "username": user.username,
+            "verified": user.verified,
             "coin_purchases": purchase_count,
             "coin_sales": sale_count,
             "held_coins": held_coins_count,
