@@ -62,15 +62,17 @@ class MeUpdateView(APIView):
         serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             email_changed = serializer.is_email_changed()
-            serializer.save()
+            user = serializer.save()
+
             return Response({
-                "username": serializer.validated_data.get("username"),
-                "email": serializer.validated_data.get("email"),
+                "username": user.username,
+                "email": user.email,
+                "verified": user.verified,
                 "email_verification_required": email_changed
             })
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-           
+        
 class MyHoldingsView(APIView):
     permission_classes = [IsAuthenticated]
 

@@ -29,10 +29,12 @@ class LoginSerializer(serializers.Serializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'email', 'password']
+        fields = ['username', 'email', 'password', 'verified']
         extra_kwargs = {
             'username': {'required': False},
             'email': {'required': False},
+            'password': {'required': False},
+            'verified': {'required': False}
         }
 
     def validate_email(self, value):
@@ -60,8 +62,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         return value
     
     def is_email_changed(self):
-        new_email = self.validated_data.get("email")
-        return bool(new_email and new_email != self.instance.email)
+        email = self.validated_data.get("email")
+        return bool(email and email != self.instance.email)
 
     def send_email_verification(self, user):
         token = default_token_generator.make_token(user)
@@ -76,16 +78,19 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
-        new_email = validated_data.get('email')
-        new_password = validated_data.pop('password', None)
-
-        if new_email and new_email != instance.email:
-            instance.unconfirmed_email = new_email
+        email = validated_data.pop('email', None)
+        password = validated_data.pop('password', None)
+        verified = validated_data.pop('verified', None)
+        
+        if email and email != instance.email:
+            instance.unconfirmed_email = email
             self.send_email_verification(instance)
-            validated_data.pop('email', None) 
 
-        if new_password:
-            instance.password = make_password(new_password)
+        if password:
+            instance.password = make_password(password)
+
+        if verified is True and not instance.verified:
+            instance.verified = True
 
         instance = super().update(instance, validated_data)
         instance.save()
