@@ -1,21 +1,19 @@
 import uuid
 from django.db import models, transaction
 from django.core.exceptions import ValidationError
-from django.contrib.auth import get_user_model
 from decimal import Decimal
+from django.conf import settings
 
-User = get_user_model()
 
 class Wallet(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.user.username}'s Wallet"
     
     @property
-    def balance(self):
+    def current_balance(self):
         deposits = self.transactions.filter(transaction_type='deposit').aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
         withdrawals = self.transactions.filter(transaction_type='withdrawal').aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
         return deposits - withdrawals
@@ -25,7 +23,7 @@ class Wallet(models.Model):
             raise ValueError("Invalid transaction type")
         if transaction_source not in dict(WalletTransaction.TRANSACTION_SOURCES):
             raise ValueError("Invalid transaction source")
-        if transaction_type == 'withdrawal' and self.balance < amount:
+        if transaction_type == 'withdrawal' and self.current_balance < amount:
             raise ValueError("Insufficient balance")
         
         with transaction.atomic():

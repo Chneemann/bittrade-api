@@ -12,10 +12,10 @@ class WalletTransactionInline(admin.TabularInline):
     
 @admin.register(Wallet)
 class WalletAdmin(admin.ModelAdmin):
-    list_display = ['user', 'balance']
+    list_display = ['user', 'current_balance']
     list_filter = []
     search_fields = ['user__username', 'user__email']
-    readonly_fields = ['balance']
+    readonly_fields = ['current_balance']
     ordering = ['user__username']
     inlines = [WalletTransactionInline]
 

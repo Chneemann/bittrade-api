@@ -56,7 +56,7 @@ class MyWalletView(WalletMixin, APIView):
         if wallet is None:
             return self.wallet_not_found_response()
 
-        data = {'id': str(wallet.id), 'balance': float(wallet.balance)}
+        data = {'id': str(wallet.id), 'balance': float(wallet.current_balance)}
         return Response(data, status=status.HTTP_200_OK)
 
 class DepositWalletView(WalletMixin, APIView):
@@ -81,7 +81,7 @@ class DepositWalletView(WalletMixin, APIView):
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
-            'balance': wallet.balance,
+            'balance': wallet.current_balance,
             'amount': amount,
             'type': 'deposit'
         }, status=status.HTTP_200_OK)
@@ -108,7 +108,7 @@ class WithdrawWalletView(WalletMixin, APIView):
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
-            'balance': wallet.balance,
+            'balance': wallet.current_balance,
             'amount': amount,
             'type': 'withdraw'
         }, status=status.HTTP_200_OK)
