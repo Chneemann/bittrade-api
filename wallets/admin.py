@@ -15,14 +15,11 @@ class WalletAdmin(admin.ModelAdmin):
     list_display = ['user', 'current_balance']
     list_filter = []
     search_fields = ['user__username', 'user__email']
-    readonly_fields = ['current_balance']
+    readonly_fields = ['user', 'current_balance']
     ordering = ['user__username']
     inlines = [WalletTransactionInline]
 
     def has_add_permission(self, request):
-        return False
-    
-    def has_delete_permission(self, request, obj=None):
         return False
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
