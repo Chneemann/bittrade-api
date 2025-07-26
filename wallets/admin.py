@@ -19,6 +19,11 @@ class WalletAdmin(admin.ModelAdmin):
     ordering = ['user__username']
     inlines = [WalletTransactionInline]
 
+    def has_delete_permission(self, request, obj=None):
+        if request.path.startswith('/admin/wallets/wallet'):
+            return False
+        return True
+
     def has_add_permission(self, request):
         return False
     
