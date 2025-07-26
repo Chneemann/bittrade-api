@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializer import LoginSerializer, UserUpdateSerializer
+from .serializer import LoginSerializer, UserRegisterSerializer, UserUpdateSerializer
 from .utils import create_token_response, ratelimit_response
 from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -11,13 +11,13 @@ from rest_framework import status
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
+from rest_framework import generics
 
 from decimal import Decimal
 from wallets.models import Wallet
 from django.db.models import Sum
 
 User = get_user_model()
-
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -177,7 +177,11 @@ class LogoutView(APIView):
         response = Response(status=200)
         response.delete_cookie('auth_token', path='/', domain=None)
         return response
-    
+
+class RegisterView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = UserRegisterSerializer
+
 class ConfirmEmailView(APIView):
     permission_classes = [AllowAny]
 

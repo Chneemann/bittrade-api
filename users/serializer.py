@@ -1,6 +1,7 @@
 import re
 from rest_framework import serializers
 from django.core.validators import MinLengthValidator
+from rest_framework.validators import UniqueValidator
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -25,6 +26,28 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("Password is required.")
         
         return data
+
+class UserRegisterSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all(), message="Email already exists")]
+    )
+    username = serializers.CharField(
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all(), message="Username already exists")]
+    )
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'verified', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
