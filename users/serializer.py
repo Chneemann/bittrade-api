@@ -1,8 +1,8 @@
 import re
 from rest_framework import serializers
-from django.core.validators import MinLengthValidator
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.validators import UniqueValidator
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode
@@ -11,22 +11,25 @@ from django.contrib.auth.hashers import make_password
 
 User = get_user_model()
 
-class LoginSerializer(serializers.Serializer):
+class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    password = serializers.CharField(validators=[MinLengthValidator(limit_value=8)])
+    password = serializers.CharField(required=True, write_only=True)
 
     def validate(self, data):
         email = data.get('email')
         password = data.get('password')
-        
-        if not email:
-            raise serializers.ValidationError("Email is required.")
-        
-        if not password:
-            raise serializers.ValidationError("Password is required.")
-        
-        return data
 
+        if email and password:
+            user = authenticate(email=email, password=password)
+            if not user:
+                raise AuthenticationFailed("Invalid email or password")
+            if not user.is_active:
+                raise AuthenticationFailed("User account is disabled")
+            data['user'] = user
+            return data
+        else:
+            raise AuthenticationFailed("Must include email and password")
+        
 class UserRegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True,

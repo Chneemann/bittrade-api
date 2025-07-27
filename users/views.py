@@ -1,8 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializer import LoginSerializer, UserRegisterSerializer, UserUpdateSerializer
+from .serializer import UserLoginSerializer, UserRegisterSerializer, UserUpdateSerializer
 from .utils import create_token_response, ratelimit_response
-from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.utils.decorators import method_decorator
 from coins.models import Coin, CoinTransaction, CoinHolding
@@ -138,38 +137,17 @@ class MyCoinTransactionsView(APIView):
         response_serializer = CoinTransactionSerializer(transaction, context={'request': request})
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
-class LoginView(APIView):
+class LoginView(generics.GenericAPIView):
     permission_classes = [AllowAny]
-    serializer_class = LoginSerializer
+    serializer_class = UserLoginSerializer
 
-    @method_decorator(ratelimit_response(rate='5/m', method='POST'))
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
 
-        if not serializer.is_valid():
-            return Response({
-                'error': 'validation_error',
-                'message': 'Invalid input data.'
-            }, status=400)
-
-        email = serializer.validated_data['email']
-        password = serializer.validated_data['password']
-        user = authenticate(request, email=email, password=password)
-
-        if not user:
-            return Response({
-                'error': 'authentication_failed',
-                'message': 'Email or password is incorrect.'
-            }, status=401)
-
-        if not user.is_active:
-            return Response({
-                'error': 'account_inactive',
-                'message': 'Account inactive. Please check your email.'
-            }, status=403)
-        
         return create_token_response(user)
-
+    
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
