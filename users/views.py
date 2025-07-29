@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializer import UserLoginSerializer, UserRegisterSerializer, UserUpdateSerializer
+from .serializer import UserLoginSerializer, UserRegisterSerializer, UserUpdateSerializer, PasswordResetRequestSerializer
 from .utils import create_token_response, ratelimit_response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.utils.decorators import method_decorator
@@ -159,6 +159,20 @@ class LogoutView(APIView):
 class RegisterView(generics.CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = UserRegisterSerializer
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    @method_decorator(ratelimit_response(rate='5/m', method='POST'))
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "If an account with that email exists, a password reset link has been sent."},
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ConfirmEmailView(APIView):
     permission_classes = [AllowAny]
