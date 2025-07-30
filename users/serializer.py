@@ -5,7 +5,7 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.utils.http import urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.hashers import make_password
 
@@ -76,6 +76,39 @@ class PasswordResetRequestSerializer(serializers.Serializer):
             recipient_list=[email],
         )
 
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField(required=True, allow_blank=True)
+    token = serializers.CharField(required=True, allow_blank=True)
+    new_password = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, data):
+        uid = data.get('uid')
+        token = data.get('token')
+
+        if not uid or not token:
+            raise serializers.ValidationError({
+                'non_field_errors': ['Reset link is incomplete.']
+            })
+
+        try:
+            uid_decoded = urlsafe_base64_decode(uid).decode()
+            user = User.objects.get(pk=uid_decoded)
+        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+            raise serializers.ValidationError({'uid': 'User does not exist.'})
+        
+        if not default_token_generator.check_token(user, token):
+            raise serializers.ValidationError({'token': 'Invalid or expired token.'})
+
+        self.user = user 
+        data['user'] = user
+        return data
+
+    def save(self, **kwargs):
+        password = self.validated_data['new_password']
+        self.user.set_password(password)
+        self.user.save()
+        return self.user
+    
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

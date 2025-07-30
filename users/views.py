@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializer import UserLoginSerializer, UserRegisterSerializer, UserUpdateSerializer, PasswordResetRequestSerializer
+from .serializer import PasswordResetConfirmSerializer, UserLoginSerializer, UserRegisterSerializer, UserUpdateSerializer, PasswordResetRequestSerializer
 from .utils import create_token_response, ratelimit_response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.utils.decorators import method_decorator
@@ -174,6 +174,16 @@ class PasswordResetRequestView(APIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Password has been reset."})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class ConfirmEmailView(APIView):
     permission_classes = [AllowAny]
 
