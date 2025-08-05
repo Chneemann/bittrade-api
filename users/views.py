@@ -66,6 +66,7 @@ class MeUpdateView(APIView):
             return Response({
                 "username": user.username,
                 "email": user.email,
+                "unconfirmed_email": user.unconfirmed_email,
                 "verified": user.verified,
                 "email_verification_required": email_changed
             })
