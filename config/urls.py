@@ -4,9 +4,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
-from users.views import LoginView, LogoutView, MeView, MeUpdateView, PasswordResetConfirmView, RegisterView, PasswordResetRequestView, MyTransactionsView, MyCoinTransactionsView, MyHoldingsView, MyCoinHoldingsView, ConfirmEmailView
+from users.views import LoginView, LogoutView, MeView, MeUpdateView, PasswordResetConfirmView, RegisterView, PasswordResetRequestView, ConfirmEmailView
 from wallets.views import MyWalletView, DepositWalletView, WithdrawWalletView
-from coins.views import CoinView
+from coins.views import CoinView, MyTransactionsView, MyCoinTransactionsView, MyHoldingsView, MyCoinHoldingsView
 
 urlpatterns = [
     # Admin
