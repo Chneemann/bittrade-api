@@ -14,7 +14,7 @@ class CoinView(APIView):
         data = [{"name": coin.name, "symbol": coin.symbol} for coin in coins]
         return Response(data, status=status.HTTP_200_OK)
 
-class MyHoldingsView(APIView):
+class MyCoinHoldingsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -22,7 +22,7 @@ class MyHoldingsView(APIView):
         serializer = CoinHoldingSerializer(holdings, many=True)
         return Response(serializer.data)
     
-class MyCoinHoldingsView(APIView):
+class MyCoinHoldingView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, coin_id):
@@ -46,7 +46,7 @@ class MyCoinHoldingsView(APIView):
         serializer = CoinHoldingSerializer(holding)
         return Response(serializer.data)
     
-class MyTransactionsView(APIView):
+class MyCoinTransactionsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -54,7 +54,7 @@ class MyTransactionsView(APIView):
         serializer = CoinTransactionSerializer(transactions, many=True)
         return Response(serializer.data)
 
-class MyCoinTransactionsView(APIView):
+class MyCoinTransactionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, coin_id):
