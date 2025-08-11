@@ -5,7 +5,7 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
 from users.views import LoginView, LogoutView, MeView, MeUpdateView, PasswordResetConfirmView, RegisterView, PasswordResetRequestView, ConfirmEmailView
-from wallets.views import MyWalletView, DepositWalletView, WithdrawWalletView
+from wallets.views import MyWalletView, DepositWalletView, WithdrawWalletView, WalletTransactionsView
 from coins.views import CoinView, MyCoinTransactionView, MyCoinTransactionsView, MyCoinHoldingView, MyCoinHoldingsView
 
 urlpatterns = [
@@ -26,12 +26,14 @@ urlpatterns = [
     
     # user coins
     path('api/me/coin/transactions/', MyCoinTransactionsView.as_view(), name='my-coin-transactions'),
-    path('api/me/coin/transactions/<str:coin_id>/', MyCoinTransactionView.as_view(), name='my-coin-transaction'),
+    path('api/me/coin/transaction/<str:coin_id>/', MyCoinTransactionView.as_view(), name='my-coin-transaction'),
     path('api/me/coin/holdings/', MyCoinHoldingsView.as_view(), name='my-coin-holdings'),
-    path('api/me/coin/holdings/<str:coin_id>/', MyCoinHoldingView.as_view(), name='my-coin-holding'),
+    path('api/me/coin/holding/<str:coin_id>/', MyCoinHoldingView.as_view(), name='my-coin-holding'),
     
     #user wallet
     path('api/me/wallet/', MyWalletView.as_view(), name='my-wallet'),
+    path('api/me/wallet/transactions/', WalletTransactionsView.as_view(), name='my-wallet-transactions'),
+    path('api/me/wallet/transactions/<str:source>/', WalletTransactionsView.as_view(), name='my-wallet-transactions'),
     path('api/me/wallet/deposit/', DepositWalletView.as_view(), name='my-wallet-deposit'),
     path('api/me/wallet/withdraw/', WithdrawWalletView.as_view(), name='my-wallet-withdraw'),
 
