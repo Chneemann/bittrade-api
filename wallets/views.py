@@ -30,10 +30,10 @@ class WalletMixin:
 class WalletTransactionsView(WalletMixin, APIView):
     permission_classes = [IsAuthenticated]
 
-    TRANSACTION_SOURCES = [
-        ('fiat', 'Fiat Transfer'),
-        ('coin', 'Coin Trade'), 
-    ]
+    TRANSACTION_SOURCES = {
+        'fiat': 'Fiat Transfer',
+        'coin': 'Coin Trade',
+    }
 
     def get(self, request, source=None, *args, **kwargs):
         wallet = self.get_wallet(request)
@@ -43,10 +43,9 @@ class WalletTransactionsView(WalletMixin, APIView):
         transactions = wallet.transactions.order_by('-created_at')
 
         if source:
-            mapped_source = self.TRANSACTION_SOURCES.get(source.lower())
-            if mapped_source:
-                transactions = transactions.filter(transaction_source=mapped_source)
-
+            if source.lower() in self.TRANSACTION_SOURCES:
+                transactions = transactions.filter(transaction_source=source.lower())
+                
         data = [
             {
                 'id': str(t.id),
