@@ -3,6 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from decimal import Decimal
+
+from wallets.serializer import WalletTransactionSerializer
 from .models import Wallet, WalletTransaction
 
 class WalletMixin:
@@ -37,26 +39,15 @@ class WalletTransactionsView(WalletMixin, APIView):
 
     def get(self, request, source=None, *args, **kwargs):
         wallet = self.get_wallet(request)
-        if wallet is None:
+        if not wallet:
             return self.wallet_not_found_response()
 
         transactions = wallet.transactions.order_by('-created_at')
+        if source and source.lower() in self.TRANSACTION_SOURCES:
+            transactions = transactions.filter(transaction_source=source.lower())
 
-        if source:
-            if source.lower() in self.TRANSACTION_SOURCES:
-                transactions = transactions.filter(transaction_source=source.lower())
-                
-        data = [
-            {
-                'id': str(t.id),
-                'type': t.transaction_type,
-                'source': t.transaction_source,
-                'amount': float(t.amount),
-                'created_at': t.created_at.isoformat(),
-            }
-            for t in transactions
-        ]
-        return Response(data, status=status.HTTP_200_OK)
+        serializer = WalletTransactionSerializer(transactions, many=True)
+        return Response(serializer.data)
     
 class MyWalletView(WalletMixin, APIView):
     permission_classes = [IsAuthenticated]
