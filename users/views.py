@@ -40,9 +40,9 @@ class MeView(APIView):
             withdrawals_fiat = get_transaction_sum(wallet, 'withdrawal', 'fiat')
             deposits_total = get_transaction_sum(wallet, 'deposit')
             withdrawals_total = get_transaction_sum(wallet, 'withdrawal')
-            balance = deposits_total - withdrawals_total
+            balance_total = deposits_total - withdrawals_total
         else:
-            deposits_fiat = withdrawals_fiat = balance = Decimal('0')
+            deposits_fiat = withdrawals_fiat = balance_total = Decimal('0')
 
         return Response({
             "id": str(user.id),
@@ -52,9 +52,9 @@ class MeView(APIView):
             "coin_purchases": purchase_count,
             "coin_sales": sale_count,
             "held_coins": held_coins_count,
-            "wallet_deposits": float(deposits_fiat),
-            "wallet_withdrawals": float(withdrawals_fiat),
-            "wallet_balance": float(balance),
+            "wallet_fiat_deposits": float(deposits_fiat),
+            "wallet_fiat_withdrawals": float(withdrawals_fiat),
+            "wallet_total_balance": float(balance_total),
         })
 
 class MeUpdateView(APIView):
