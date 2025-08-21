@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializer import PasswordResetConfirmSerializer, UserLoginSerializer, UserRegisterSerializer, UserUpdateSerializer, PasswordResetRequestSerializer
-from .utils import create_token_response, ratelimit_response
+from .utils import create_token_response, get_transaction_sum, ratelimit_response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.utils.decorators import method_decorator
 from coins.models import CoinTransaction, CoinHolding
@@ -13,7 +13,6 @@ from rest_framework import generics
 
 from decimal import Decimal
 from wallets.models import Wallet
-from django.db.models import Sum
 
 User = get_user_model()
 
@@ -24,36 +23,26 @@ class MeView(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
 
-        purchase_count = CoinTransaction.objects.filter(user=user, transaction_type='buy').count()
-        sale_count = CoinTransaction.objects.filter(user=user, transaction_type='sell').count()
-        held_coins_count = CoinHolding.objects.filter(user=user, amount__gt=0).count()
+        purchase_count = CoinTransaction.objects.filter(
+            user=user, transaction_type='buy'
+        ).count()
+        sale_count = CoinTransaction.objects.filter(
+            user=user, transaction_type='sell'
+        ).count()
+        held_coins_count = CoinHolding.objects.filter(
+            user=user, amount__gt=0
+        ).count()
 
         wallet = Wallet.objects.filter(user=user).first()
 
         if wallet:
-            deposits_fiat = wallet.transactions.filter(
-                transaction_type='deposit',
-                transaction_source='fiat'
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-
-            withdrawals_fiat = wallet.transactions.filter(
-                transaction_type='withdrawal',
-                transaction_source='fiat'
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-
-            deposits_total = wallet.transactions.filter(
-                transaction_type='deposit'
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-
-            withdrawals_total = wallet.transactions.filter(
-                transaction_type='withdrawal'
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-
+            deposits_fiat = get_transaction_sum(wallet, 'deposit', 'fiat')
+            withdrawals_fiat = get_transaction_sum(wallet, 'withdrawal', 'fiat')
+            deposits_total = get_transaction_sum(wallet, 'deposit')
+            withdrawals_total = get_transaction_sum(wallet, 'withdrawal')
             balance = deposits_total - withdrawals_total
         else:
-            deposits_fiat = Decimal('0')
-            withdrawals_fiat = Decimal('0')
-            balance = Decimal('0')
+            deposits_fiat = withdrawals_fiat = balance = Decimal('0')
 
         return Response({
             "id": str(user.id),

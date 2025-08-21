@@ -7,6 +7,8 @@ from config.settings import TOKEN_EXPIRATION_TIME
 from django.conf import settings
 from django_ratelimit.decorators import ratelimit
 from functools import wraps
+from decimal import Decimal
+from django.db.models import Sum
 
 def set_auth_cookie(response, token_key, max_age):
     """
@@ -63,3 +65,16 @@ def ratelimit_response(key='ip', rate='5/m', method='POST'):
             return view_func(request, *args, **kwargs)
         return _wrapped_view
     return decorator
+
+def get_transaction_sum(wallet, tx_type, source=None):
+    """
+    Returns the sum of all transactions of a given type
+    """
+    filters = {'transaction_type': tx_type}
+    if source:
+        filters['transaction_source'] = source
+    return (
+        wallet.transactions.filter(**filters)
+        .aggregate(total=Sum('amount'))['total']
+        or Decimal('0')
+    )
