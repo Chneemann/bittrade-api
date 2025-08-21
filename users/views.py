@@ -31,13 +31,28 @@ class MeView(APIView):
         wallet = Wallet.objects.filter(user=user).first()
 
         if wallet:
-            deposits = wallet.transactions.filter(transaction_type='deposit').aggregate(total=Sum('amount'))['total'] or Decimal('0')
-            withdrawals = wallet.transactions.filter(transaction_type='withdrawal').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            deposits_fiat = wallet.transactions.filter(
+                transaction_type='deposit',
+                transaction_source='fiat'
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
-            balance = deposits - withdrawals
+            withdrawals_fiat = wallet.transactions.filter(
+                transaction_type='withdrawal',
+                transaction_source='fiat'
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+            deposits_total = wallet.transactions.filter(
+                transaction_type='deposit'
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+            withdrawals_total = wallet.transactions.filter(
+                transaction_type='withdrawal'
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+            balance = deposits_total - withdrawals_total
         else:
-            deposits = Decimal('0')
-            withdrawals = Decimal('0')
+            deposits_fiat = Decimal('0')
+            withdrawals_fiat = Decimal('0')
             balance = Decimal('0')
 
         return Response({
@@ -48,8 +63,8 @@ class MeView(APIView):
             "coin_purchases": purchase_count,
             "coin_sales": sale_count,
             "held_coins": held_coins_count,
-            "wallet_deposits": float(deposits),
-            "wallet_withdrawals": float(withdrawals),
+            "wallet_deposits": float(deposits_fiat),
+            "wallet_withdrawals": float(withdrawals_fiat),
             "wallet_balance": float(balance),
         })
 
