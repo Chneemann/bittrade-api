@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'users',
     'coins',
     'wallets',
+    'caches',
 ]
 
 MIDDLEWARE = [
