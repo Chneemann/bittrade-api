@@ -110,6 +110,10 @@ CACHES = {
     }
 }
 
+# Celery
+
+CELERY_BROKER_URL = "redis://:foobared@127.0.0.1:6379/1"
+CELERY_RESULT_BACKEND = "redis://:foobared@127.0.0.1:6379/1"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
