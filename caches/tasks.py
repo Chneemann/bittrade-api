@@ -28,3 +28,26 @@ def cache_coin_data(coin_id: str):
 
     except requests.RequestException as e:
         return f"Error caching {coin_id}: {str(e)}"
+    
+@shared_task
+def cache_coin_chart(coin_id: str, days: str):
+    """
+    Loads historical chart data for a coin and saves it permanently in Redis.
+    """
+    url = f"{settings.COINGECKO_API_URL}/coins/{coin_id}/market_chart"
+    params = {"vs_currency": "usd", "days": days}
+    if settings.COINGECKO_API_KEY:
+        params["x_cg_demo_api_key"] = settings.COINGECKO_API_KEY
+
+    try:
+        resp = requests.get(url, params=params)
+        resp.raise_for_status()
+        data = resp.json()
+
+        redis_key = f"chart:{coin_id.lower()}:{days}"
+        cache.set(redis_key, data, timeout=COIN_TTL)
+
+        return f"{redis_key} cached successfully"
+
+    except requests.RequestException as e:
+        return f"Error caching {coin_id} chart {days}d: {str(e)}"
