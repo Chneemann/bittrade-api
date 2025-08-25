@@ -199,6 +199,11 @@ Env.read_env()
 DEBUG = env.bool('DEBUG', default=False)
 SECRET_KEY = env('SECRET_KEY')
 
+# CoinGecko 
+
+COINGECKO_API_URL = env("COINGECKO_API_URL")
+COINGECKO_API_KEY = env("COINGECKO_API_KEY", default=None)
+
 # Mail
 
 EMAIL_USE_TLS = True
