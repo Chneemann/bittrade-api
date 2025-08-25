@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from config.celery import app  
 from coins.models import Coin
 
-class CacheView(APIView):
+class QueueCoinCacheView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
