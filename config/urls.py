@@ -7,7 +7,7 @@ from django.views.generic import RedirectView
 from users.views import LoginView, LogoutView, MeView, MeUpdateView, PasswordResetConfirmView, RegisterView, PasswordResetRequestView, ConfirmEmailView
 from wallets.views import MyWalletView, DepositWalletView, WithdrawWalletView, WalletTransactionsView
 from coins.views import CoinView, MyCoinTransactionView, MyCoinTransactionsView, MyCoinHoldingView, MyCoinHoldingsView
-from caches.views import QueueCoinCacheView, CachedCoinListView
+from caches.views import CoinCacheView
 
 urlpatterns = [
     # Admin
@@ -42,9 +42,8 @@ urlpatterns = [
     path('api/coins/', CoinView.as_view(), name='coins'),
 
     # coins cache
-    path("api/coins/cache/", CachedCoinListView.as_view(), name='cached-coin-list'),
-    path("api/coins/queue-cache/", QueueCoinCacheView.as_view(), name='queue-coin-cache'),
-
+    path("api/coins/cache/", CoinCacheView.as_view(), name="coin-cache"),
+    
     # Favicon
     path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
 ]
