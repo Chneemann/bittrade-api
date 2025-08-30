@@ -23,14 +23,14 @@ class CoinCacheView(APIView):
         return Response(results, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
-        coins = Coin.objects.filter(is_active=True)
         results = []
 
-        for coin in coins:
+        for coin in Coin.objects.filter(is_active=True):
             try:
-                app.send_task('caches.tasks.cache_coin_data', args=[coin.slug])
-                results.append(f"{coin.slug} queued")
+                task = app.send_task('caches.tasks.cache_coin_data', args=[coin.slug])
+                task.get(timeout=30)
+                results.append(f"{coin.slug} cached successfully")
             except Exception as e:
                 results.append(f"{coin.slug} failed: {str(e)}")
 
-        return Response(results, status=status.HTTP_200_OK)
+        return Response({"results": results}, status=status.HTTP_200_OK)
