@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.core.cache import cache
+from django.utils.timezone import now
 
 from config.celery import app  
 from coins.models import Coin
@@ -17,9 +18,7 @@ class CoinCacheView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """
-        Return cached data for all active coins.
-        """
+        """Return cached data incl. timestamp for all active coins."""
         coins = Coin.objects.filter(is_active=True)
         results = {}
 
@@ -27,14 +26,16 @@ class CoinCacheView(APIView):
             redis_key = f"coin:{coin.slug}"
             cached = cache.get(redis_key)
             if cached:
-                results[coin.slug] = cached 
-                
+                timestamp = cache.get(f"coin:{coin.slug}:timestamp")
+                results[coin.slug] = {
+                    "data": cached,
+                    "timestamp": timestamp,
+                }
+
         return Response(results, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
-        """
-        Run cache tasks for coin data and 30d chart.
-        """
+        """Run cache tasks for coin data and 30d chart."""
         coins = Coin.objects.filter(is_active=True)
         tasks = [
             (coin.slug, kind, app.send_task(task, args=args))
@@ -49,6 +50,8 @@ class CoinCacheView(APIView):
         for slug, kind, task in tasks:
             try:
                 task.get(timeout=30)
+                timestamp = int(now().timestamp() * 1000)
+                cache.set(f"coin:{slug}:timestamp", timestamp, None)
                 results.append(f"{slug} {kind} cached successfully")
             except Exception as e:
                 results.append(f"{slug} {kind} failed: {str(e)}")
