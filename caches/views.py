@@ -38,7 +38,7 @@ class CoinCacheBase(APIView):
 class CoinCacheView(CoinCacheBase):
     """
     GET: return cached coin data for all active coins
-    POST: refresh all active coins (data+chart)
+    POST: refresh all active coins (data + chart 1d)
     """
     permission_classes = [IsAuthenticated]
 
@@ -46,13 +46,24 @@ class CoinCacheView(CoinCacheBase):
         coins = Coin.objects.filter(is_active=True)
         results = {}
 
+        chart_days = [1, 7, 30, 180, 365]
+
         for coin in coins:
             redis_key = f"coin:{coin.slug}"
-            cached = cache.get(redis_key)
-            if cached:
+            cached_data = cache.get(redis_key)
+            if cached_data:
                 timestamp = cache.get(f"coin:{coin.slug}:timestamp")
+
+                cached_charts = {}
+                for days in chart_days:
+                    chart_key = f"chart:{coin.slug}:{days}"
+                    chart_data = cache.get(chart_key)
+                    if chart_data:
+                        cached_charts[str(days)] = chart_data
+
                 results[coin.slug] = {
-                    "data": cached,
+                    "data": cached_data,
+                    "charts": cached_charts,
                     "timestamp": timestamp,
                 }
 
@@ -63,9 +74,8 @@ class CoinCacheView(CoinCacheBase):
         results = []
         for coin in coins:
             results.append(self.run_task(coin.slug, "data", [coin.slug]))
-            results.append(self.run_task(coin.slug, "chart", [coin.slug, "30"]))
+            results.append(self.run_task(coin.slug, "chart", [coin.slug, "1"]))
         return Response({"results": results}, status=status.HTTP_200_OK)
-
 
 class SingleCoinCacheView(CoinCacheBase):
     """
