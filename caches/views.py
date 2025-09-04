@@ -21,22 +21,22 @@ class CoinCacheBase(APIView):
 
     def run_task(self, slug: str, kind: str, args: list):
         """
-        Run a Celery task and store timestamp in Redis.
-        If `days` is given (for chart), the timestamp key follows the same pattern:
-        "chart:<slug>:<days>:timestamp"
+        Run a Celery task and store cached_at timestamp in Redis.
+        If `days` is given (for chart), the cached_at key follows the same pattern:
+        "chart:<slug>:<days>:cached_at"
         """
         try:
             task_name = TASKS[kind]
             task = app.send_task(task_name, args=args)
             task.get(timeout=30)
 
-            timestamp = int(now().timestamp() * 1000)
+            cached_at = int(now().timestamp() * 1000)
 
             if kind == "chart" and len(args) > 1:
                 days = args[1]
-                cache.set(f"chart:{slug}:{days}:timestamp", timestamp, None)
+                cache.set(f"chart:{slug}:{days}:cached_at", cached_at, None)
             else:
-                cache.set(f"coin:{slug}:timestamp", timestamp, None)
+                cache.set(f"coin:{slug}:cached_at", cached_at, None)
 
             return f"{slug} {kind} cached successfully"
         except Exception as e:
@@ -59,23 +59,23 @@ class CoinCacheView(CoinCacheBase):
             redis_key = f"coin:{coin.slug}"
             cached_data = cache.get(redis_key)
             if cached_data:
-                timestamp = cache.get(f"coin:{coin.slug}:timestamp")
+                cached_at = cache.get(f"coin:{coin.slug}:cached_at")
 
                 cached_charts = {}
                 for days in chart_days:
                     chart_key = f"chart:{coin.slug}:{days}"
                     chart_data = cache.get(chart_key)
                     if chart_data:
-                        chart_timestamp = cache.get(f"chart:{coin.slug}:{days}:timestamp")
+                        chart_cached_at = cache.get(f"chart:{coin.slug}:{days}:cached_at")
                         cached_charts[str(days)] = {
                             "data": chart_data,
-                            "timestamp": chart_timestamp,
+                            "cached_at": chart_cached_at,
                         }
 
                 results[coin.slug] = {
                     "data": cached_data,
                     "charts": cached_charts,
-                    "timestamp": timestamp,
+                    "cached_at": cached_at,
                 }
 
         return Response(results, status=status.HTTP_200_OK)
@@ -90,9 +90,9 @@ class CoinCacheView(CoinCacheBase):
 
 class SingleCoinCacheView(CoinCacheBase):
     """
-    Cache a single coin's chart.
-    URL: /api/coins/cache/chart/<slug>
-    Optional query param: ?days=7
+    Cache a single coin's data or chart.
+    URL: /api/coins/cache/<kind>/<slug>
+    Optional query param (for chart): ?days=7
     Allowed: 1, 7, 30, 180, 365
     """
     ALLOWED_DAYS = [1, 7, 30, 180, 365]
