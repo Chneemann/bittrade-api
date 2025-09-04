@@ -22,18 +22,25 @@ class CoinCacheBase(APIView):
     def run_task(self, slug: str, kind: str, args: list):
         """
         Run a Celery task and store timestamp in Redis.
-        If `days` is given, the timestamp key is suffixed with it.
+        If `days` is given (for chart), the timestamp key follows the same pattern:
+        "chart:<slug>:<days>:timestamp"
         """
         try:
             task_name = TASKS[kind]
             task = app.send_task(task_name, args=args)
             task.get(timeout=30)
+
             timestamp = int(now().timestamp() * 1000)
-            cache.set(f"coin:{slug}:timestamp", timestamp, None)
+
+            if kind == "chart" and len(args) > 1:
+                days = args[1]
+                cache.set(f"chart:{slug}:{days}:timestamp", timestamp, None)
+            else:
+                cache.set(f"coin:{slug}:timestamp", timestamp, None)
+
             return f"{slug} {kind} cached successfully"
         except Exception as e:
             return f"{slug} {kind} failed: {str(e)}"
-
 
 class CoinCacheView(CoinCacheBase):
     """
@@ -59,7 +66,11 @@ class CoinCacheView(CoinCacheBase):
                     chart_key = f"chart:{coin.slug}:{days}"
                     chart_data = cache.get(chart_key)
                     if chart_data:
-                        cached_charts[str(days)] = chart_data
+                        chart_timestamp = cache.get(f"chart:{coin.slug}:{days}:timestamp")
+                        cached_charts[str(days)] = {
+                            "data": chart_data,
+                            "timestamp": chart_timestamp,
+                        }
 
                 results[coin.slug] = {
                     "data": cached_data,
