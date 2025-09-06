@@ -8,6 +8,8 @@ from django.utils.timezone import now
 from config.celery import app
 from coins.models import Coin
 
+CACHE_TTL_MS = 60 * 60 * 1000  # 1h
+
 TASKS = {
     "data": "caches.tasks.cache_coin_data",
     "chart": "caches.tasks.cache_coin_chart",
@@ -22,21 +24,29 @@ class CoinCacheBase(APIView):
     def run_task(self, slug: str, kind: str, args: list):
         """
         Run a Celery task and store cached_at timestamp in Redis.
-        If `days` is given (for chart), the cached_at key follows the same pattern:
+        Skip execution if the cache is less than 1 hour old.
+        For chart data, the cached_at key follows the pattern:
         "chart:<slug>:<days>:cached_at"
         """
         try:
+            if kind == "chart" and len(args) > 1:
+                days = args[1]
+                cached_at_key = f"chart:{slug}:{days}:cached_at"
+            else:
+                cached_at_key = f"coin:{slug}:cached_at"
+
+            cached_at = cache.get(cached_at_key)
+            if cached_at:
+                now_ms = int(now().timestamp() * 1000)
+                if now_ms - cached_at < CACHE_TTL_MS:
+                    return f"{slug} {kind} skipped (cache < 1h old)"
+
             task_name = TASKS[kind]
             task = app.send_task(task_name, args=args)
             task.get(timeout=30)
 
-            cached_at = int(now().timestamp() * 1000)
-
-            if kind == "chart" and len(args) > 1:
-                days = args[1]
-                cache.set(f"chart:{slug}:{days}:cached_at", cached_at, None)
-            else:
-                cache.set(f"coin:{slug}:cached_at", cached_at, None)
+            new_cached_at = int(now().timestamp() * 1000)
+            cache.set(cached_at_key, new_cached_at, None)
 
             return f"{slug} {kind} cached successfully"
         except Exception as e:
